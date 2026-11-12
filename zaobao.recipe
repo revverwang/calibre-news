@@ -8,35 +8,6 @@ def target_date():
     bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
     return bj_now.date()
 
-CLEAN_CSS = u"""html, body { margin: 0; padding: 0; }
-body {
-  font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", serif;
-  color: #111;
-  line-height: 1.78;
-  text-align: justify;
-  margin: 0.9em 1em 1.6em;
-  word-wrap: break-word;
-}
-h1, h2, h3, h4, h5 {
-  font-family: "PingFang SC", "Noto Sans CJK SC", sans-serif;
-  text-align: left; line-height: 1.45; page-break-after: avoid;
-}
-h1 { font-size: 1.42em; font-weight: bold; margin: 0 0 0.9em; padding-bottom: 0.45em; border-bottom: 2px solid #333; }
-h2 { font-size: 1.18em; font-weight: bold; margin: 1.9em 0 0.8em; padding-left: 0.55em; border-left: 4px solid #777; }
-h3 { font-size: 1.06em; font-weight: bold; margin: 1.6em 0 0.6em; }
-p { margin: 0 0 0.55em; text-indent: 2em; orphans: 2; widows: 2; }
-blockquote { margin: 1.1em 1.2em; padding: 0.2em 0 0.2em 0.9em; border-left: 3px solid #bbb; color: #333; }
-blockquote p { text-indent: 0; }
-ul, ol { margin: 0.7em 0 0.9em 1.1em; padding: 0; }
-li { margin: 0 0 0.35em; }
-table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.94em; }
-th, td { border: 1px solid #bbb; padding: 0.4em 0.5em; text-align: left; vertical-align: top; }
-th { background: #f2f2f2; font-weight: bold; }
-a { color: inherit; text-decoration: none; }
-hr { border: 0; border-top: 1px solid #ccc; margin: 1.6em 0; }
-sup { font-size: 0.72em; }
-img, figure, figcaption, picture, video, iframe, object, embed { display: none !important; }
-.calibre_navbar, .calibre_footer { display: none !important; }"""
 
 # ---------------------------------------------------------------------------
 # 纯文字 + 工整排版：三个源共用同一套净化规则
@@ -161,7 +132,6 @@ class LianheZaobao(BasicNewsRecipe):
     encoding = 'utf-8'
     no_stylesheets = True
     no_images = True
-    extra_css = CLEAN_CSS
     remove_javascript = True
     use_embedded_content = False
     max_articles_per_feed = 20
