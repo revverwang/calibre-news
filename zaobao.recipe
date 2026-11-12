@@ -4,6 +4,12 @@ import datetime
 from calibre.web.feeds.news import BasicNewsRecipe
 
 
+def target_date():
+    """要制作的那一天的新闻：北京时间「昨天」全程 0:00-24:00。"""
+    bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
+    return bj_now.date() - datetime.timedelta(days=1)
+
+
 class LianheZaobao(BasicNewsRecipe):
     title = '联合早报'
     __author__ = 'Calibre News Delivery (custom)'
@@ -28,7 +34,6 @@ class LianheZaobao(BasicNewsRecipe):
     BASE = 'https://www.zaobao.com.sg'
     # 文章 URL 自带日期：/news/china/story20261112-9984446
     ART_RE = re.compile(r'^https://www\.zaobao\.com\.sg(/[a-z-]+/[a-z-]+/story(\d{8})-\d+)')
-    DAYS = 2
 
     SECTIONS = [
         ('新加坡', BASE + '/news/singapore'),
@@ -39,7 +44,8 @@ class LianheZaobao(BasicNewsRecipe):
     ]
 
     def parse_index(self):
-        today = datetime.date.today()
+        target = target_date()
+        self.log(f'Target date (Beijing yesterday): {target}')
         feeds = []
         for sec_title, sec_url in self.SECTIONS:
             cand = {}
@@ -63,7 +69,7 @@ class LianheZaobao(BasicNewsRecipe):
                     d = datetime.datetime.strptime(m.group(2), '%Y%m%d').date()
                 except ValueError:
                     continue
-                if (today - d).days > self.DAYS:
+                if d != target:
                     continue
                 title = (a.get('title') or '').strip()
                 if len(title) < 6:
@@ -86,9 +92,15 @@ class LianheZaobao(BasicNewsRecipe):
                 {'title': t or f'{sec_title}新闻', 'url': u, 'description': '', 'date': ''}
                 for u, t in cand.items()
             ][: self.max_articles_per_feed]
-            self.log(f'{sec_title}: anchors={len(all_a)} candidates={len(cand)} kept={len(articles)}')
+            self.log(f'{sec_title}: anchors={len(all_a)} kept={len(articles)} on {target}')
             if articles:
                 feeds.append((sec_title, articles))
         if not feeds:
-            raise Exception('No fresh articles found')
+            raise Exception(f'No articles published on {target}')
         return feeds
+
+    def postprocess_html(self, soup, first_fetch):
+        # no_images 在新版 Calibre 里不再生效，手动剔除图片/视频，避免 epub 撑爆
+        for tag in soup.find_all(['img', 'picture', 'source', 'video', 'iframe']):
+            tag.decompose()
+        return soup
