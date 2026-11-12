@@ -1,7 +1,7 @@
 import re
 import datetime
 
-from calibre.web.feeds.news import BasicNewsRecipe
+from calibre.web.feeds.news import BasicNewsRecipe, EmptyIndex
 
 
 class LianheZaobao(BasicNewsRecipe):
@@ -23,9 +23,10 @@ class LianheZaobao(BasicNewsRecipe):
         dict(name='style'),
     ]
 
+    USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
     BASE = 'https://www.zaobao.com.sg'
     # 文章 URL 自带日期：/news/china/story20261112-9984446
-    ART_RE = re.compile(r'^(?:https://www\.zaobao\.com\.sg)?(/[a-z-]+/[a-z-]+/story(\d{8})-\d+)$')
+    ART_RE = re.compile(r'^https://www\.zaobao\.com\.sg(/[a-z-]+/[a-z-]+/story(\d{8})-\d+)')
     DAYS = 2
 
     SECTIONS = [
@@ -46,8 +47,14 @@ class LianheZaobao(BasicNewsRecipe):
             except Exception as e:
                 self.log(f'Section failed: {sec_url} ({e})')
                 continue
-            for a in soup.findAll('a', href=True):
-                href = a['href']
+            all_a = soup.findAll('a', href=True)
+            for a in all_a:
+                href = a['href'].strip()
+                if href.startswith('//'):
+                    href = 'https:' + href
+                elif href.startswith('/'):
+                    href = self.BASE + href
+                href = href.split('?')[0]
                 m = self.ART_RE.match(href)
                 if not m or href in seen:
                     continue
@@ -64,8 +71,8 @@ class LianheZaobao(BasicNewsRecipe):
                 articles.append(
                     {'title': t, 'url': self.BASE + m.group(1), 'description': '', 'date': ''}
                 )
+            self.log(f'{sec_title}: anchors={len(all_a)} matched={len(articles)}')
             if articles:
-                self.log(f'{sec_title}: {len(articles)} articles')
                 feeds.append((sec_title, articles[: self.max_articles_per_feed]))
         if not feeds:
             raise EmptyIndex('No fresh articles found')
