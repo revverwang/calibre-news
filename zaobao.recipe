@@ -5,9 +5,9 @@ from calibre.web.feeds.news import BasicNewsRecipe
 
 
 def target_date():
-    """要制作的那一天的新闻：北京时间「昨天」全程 0:00-24:00。"""
+    """要制作的那一天的新闻：北京时间「当天」0:00 至抓取时刻。"""
     bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
-    return bj_now.date() - datetime.timedelta(days=1)
+    return bj_now.date()
 
 
 class LianheZaobao(BasicNewsRecipe):
