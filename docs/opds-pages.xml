@@ -8,14 +8,6 @@
   <link rel="self" href="https://revverwang.github.io/calibre-news/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://revverwang.github.io/calibre-news/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <entry>
-    <title>联合早报 [Thu, 12 Nov 2026]</title>
-    <id>urn:uuid:2ba0bee3-91fd-58c6-96d7-433ec9d83860</id>
-    <updated>2026-11-11T00:00:00Z</updated>
-    <author><name>Calibre News Delivery</name></author>
-    <content type="text">EPUB · 333 KB</content>
-    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-11-%E8%81%94%E5%90%88%E6%97%A9%E6%8A%A5%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
-  </entry>
-  <entry>
     <title>环球时报 [Thu, 12 Nov 2026]</title>
     <id>urn:uuid:4041d1d5-ec78-5050-87c7-3f4ce31139e6</id>
     <updated>2026-11-11T00:00:00Z</updated>
