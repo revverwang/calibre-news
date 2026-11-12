@@ -39,17 +39,15 @@ class LianheZaobao(BasicNewsRecipe):
 
     def parse_index(self):
         today = datetime.date.today()
-        feeds, seen = [], set()
+        feeds = []
         for sec_title, sec_url in self.SECTIONS:
-            articles = []
+            cand = {}
             try:
                 soup = self.index_to_soup(sec_url)
             except Exception as e:
                 self.log(f'Section failed: {sec_url} ({e})')
                 continue
             all_a = soup.findAll('a', href=True)
-            story_a = [a['href'] for a in all_a if 'story' in a['href']]
-            self.log(f'  story links: {len(story_a)} sample: {story_a[:3]}')
             for a in all_a:
                 href = a['href'].strip()
                 if href.startswith('//'):
@@ -58,7 +56,7 @@ class LianheZaobao(BasicNewsRecipe):
                     href = self.BASE + href
                 href = href.split('?')[0]
                 m = self.ART_RE.match(href)
-                if not m or href in seen:
+                if not m:
                     continue
                 try:
                     d = datetime.datetime.strptime(m.group(2), '%Y%m%d').date()
@@ -66,16 +64,30 @@ class LianheZaobao(BasicNewsRecipe):
                     continue
                 if (today - d).days > self.DAYS:
                     continue
-                seen.add(href)
-                t = (a.get('title') or self.tag_to_string(a)).strip()
-                if len(t) < 6:
-                    continue
-                articles.append(
-                    {'title': t, 'url': self.BASE + m.group(1), 'description': '', 'date': ''}
-                )
-            self.log(f'{sec_title}: anchors={len(all_a)} matched={len(articles)}')
+                title = (a.get('title') or '').strip()
+                if len(title) < 6:
+                    title = self.tag_to_string(a).strip()
+                if len(title) < 6:
+                    node = a
+                    for _ in range(3):
+                        node = getattr(node, 'parent', None)
+                        if node is None:
+                            break
+                        head = node.find(['h1', 'h2', 'h3', 'h4'])
+                        if head is not None:
+                            candidate = self.tag_to_string(head).strip()
+                            if len(candidate) >= 6:
+                                title = candidate
+                                break
+                if href not in cand or (title and len(title) > len(cand.get(href) or '')):
+                    cand[href] = title
+            articles = [
+                {'title': t or f'{sec_title}新闻', 'url': u, 'description': '', 'date': ''}
+                for u, t in cand.items()
+            ][: self.max_articles_per_feed]
+            self.log(f'{sec_title}: anchors={len(all_a)} candidates={len(cand)} kept={len(articles)}')
             if articles:
-                feeds.append((sec_title, articles[: self.max_articles_per_feed]))
+                feeds.append((sec_title, articles))
         if not feeds:
             raise Exception('No fresh articles found')
         return feeds
