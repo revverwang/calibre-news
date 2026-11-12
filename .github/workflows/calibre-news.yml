@@ -167,7 +167,7 @@ jobs:
             sleep 5
             curl -s -m 30 -X POST https://purge.jsdelivr.net/ \
               -H 'Content-Type: application/json' \
-              -d '{"path":["gh/revverwang/calibre-news@master/docs/opds.xml","gh/revverwang/calibre-news@master/docs/index.html","gh/revverwang/calibre-news@master/docs/opds-pages.xml"]}' \
+              -d '{"path":["gh/revverwang/calibre-news@master/docs/opds.xml","gh/revverwang/calibre-news/docs/opds.xml","gh/revverwang/calibre-news@master/docs/catalog.xml","gh/revverwang/calibre-news/docs/catalog.xml","gh/revverwang/calibre-news@master/docs/index.html","gh/revverwang/calibre-news@master/docs/opds-pages.xml"]}' \
               || true
           fi
       - name: Storing Ebook
