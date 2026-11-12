@@ -5,6 +5,137 @@ import urllib.request
 
 from calibre.web.feeds.news import BasicNewsRecipe
 
+CLEAN_CSS = u"""html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  color: #111;
+  line-height: 1.78;
+  text-align: justify;
+  margin: 0.9em 1em 1.6em;
+  word-wrap: break-word;
+}
+h1, h2, h3, h4, h5 {
+  font-family: "PingFang SC", "Noto Sans CJK SC", sans-serif;
+  text-align: left; line-height: 1.45; page-break-after: avoid;
+}
+h1 { font-size: 1.42em; font-weight: bold; margin: 0 0 0.9em; padding-bottom: 0.45em; border-bottom: 2px solid #333; }
+h2 { font-size: 1.18em; font-weight: bold; margin: 1.9em 0 0.8em; padding-left: 0.55em; border-left: 4px solid #777; }
+h3 { font-size: 1.06em; font-weight: bold; margin: 1.6em 0 0.6em; }
+p { margin: 0 0 0.55em; text-indent: 2em; orphans: 2; widows: 2; }
+blockquote { margin: 1.1em 1.2em; padding: 0.2em 0 0.2em 0.9em; border-left: 3px solid #bbb; color: #333; }
+blockquote p { text-indent: 0; }
+ul, ol { margin: 0.7em 0 0.9em 1.1em; padding: 0; }
+li { margin: 0 0 0.35em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.94em; }
+th, td { border: 1px solid #bbb; padding: 0.4em 0.5em; text-align: left; vertical-align: top; }
+th { background: #f2f2f2; font-weight: bold; }
+a { color: inherit; text-decoration: none; }
+hr { border: 0; border-top: 1px solid #ccc; margin: 1.6em 0; }
+sup { font-size: 0.72em; }
+img, figure, figcaption, picture, video, iframe, object, embed { display: none !important; }
+.calibre_navbar, .calibre_footer { display: none !important; }"""
+
+# ---------------------------------------------------------------------------
+# 纯文字 + 工整排版：三个源共用同一套净化规则
+# ---------------------------------------------------------------------------
+_JUNK_TOKENS = {
+    'ad', 'ads', 'adv', 'advert', 'adverts', 'advertisement', 'advertising',
+    'promo', 'promotion', 'sponsor', 'sponsored', 'affiliate',
+    'share', 'sharing', 'social', 'related', 'recommend', 'recommended',
+    'newsletter', 'subscribe', 'subscription', 'paywall',
+    'comment', 'comments', 'toolbar', 'breadcrumb', 'navbar', 'footer',
+    'sidebar', 'popup', 'modal', 'cookie', 'banner', 'further', 'reading',
+}
+_MEDIA_TAGS = [
+    'img', 'picture', 'source', 'video', 'audio', 'iframe', 'embed', 'object',
+    'svg', 'canvas', 'figure', 'figcaption', 'track',
+]
+_CHROME_TAGS = [
+    'script', 'style', 'noscript', 'form', 'button', 'input', 'select',
+    'textarea', 'label', 'nav', 'aside',
+]
+# 图注/署名：以（某某摄）、（图）、“某某 摄”结尾的短块
+_CAPTION_END = re.compile(r'[（(][^（）()]{0,16}(摄|图|摄影|供图|资料图)[）)]\s*$')
+_CAPTION_TAIL = re.compile(r'[\s　](摄|图)\s*$')
+_CREDIT_HEAD = re.compile(
+    r'^\s*(图|图片|摄影|摄|图片来源|资料来源|Photo|Photograph|Image|Picture'
+    r'|Credit|Source|Illustration|File photo)\s*[:：/]', re.I)
+_BYLINE_TAIL = re.compile(
+    r'^\s*(责编|编辑|责任编辑|校对|审校|来源|本文来源|文章来源)\s*[:：]')
+
+
+def _tokens(tag):
+    vals = list(tag.get('class') or []) + [tag.get('id') or '']
+    out = []
+    for v in vals:
+        out.extend([t for t in re.split(r'[-_\s]+', str(v).lower()) if t])
+    return out
+
+
+def tidy_article(recipe, soup):
+    """剔除图片/广告/推荐位，清掉内联样式，只留干净的文章正文。"""
+    from bs4 import BeautifulSoup
+
+    # 0) 部分站点（如环球网）把正文作为转义 HTML 塞进 <textarea>，不还原就会显示成标签文本
+    for ta in soup.find_all('textarea'):
+        raw = ta.get_text() or ''
+        if '<' in raw:
+            frag = BeautifulSoup(raw, 'html.parser')
+            box = soup.new_tag('div')
+            for child in list(frag.contents):
+                box.append(child.extract())
+            ta.replace_with(box)
+        else:
+            ta.decompose()
+
+    # 1) 广告/分享/推荐/导航等容器整块删除
+    for tag in soup.find_all(True):
+        if tag.name in ('html', 'body'):
+            continue
+        toks = _tokens(tag)
+        if toks and any(t in _JUNK_TOKENS for t in toks):
+            tag.decompose()
+    # 自定义元素（astro-island / adv-loader / zb-web2-poll 之类）
+    for tag in soup.find_all(lambda t: t.name and '-' in t.name):
+        tag.decompose()
+
+    # 2) 媒体与表单元素
+    for name in _MEDIA_TAGS + _CHROME_TAGS:
+        for tag in soup.find_all(name):
+            tag.decompose()
+
+    # 3) 图注、版权署名、编辑署名等零碎短段
+    for tag in soup.find_all(['p', 'div', 'span', 'em', 'strong', 'small']):
+        txt = tag.get_text(' ', strip=True)
+        if not txt or len(txt) > 130:
+            continue
+        if (_CREDIT_HEAD.search(txt) or _BYLINE_TAIL.search(txt)
+                or _CAPTION_END.search(txt) or _CAPTION_TAIL.search(txt)):
+            tag.decompose()
+
+    # 4) 只剩空壳的容器
+    for _ in range(3):
+        for tag in soup.find_all(['p', 'div', 'span', 'section', 'article',
+                                  'em', 'strong', 'b', 'i', 'li', 'h1', 'h2', 'h3', 'h4']):
+            if not tag.get_text(strip=True) and not tag.find('br'):
+                tag.decompose()
+
+    # 5) 内联样式/宽度/颜色等一律清掉，交给统一 CSS 接管
+    for tag in soup.find_all(True):
+        for attr in list(tag.attrs):
+            if (attr in ('style', 'class', 'id', 'width', 'height', 'align', 'valign',
+                         'bgcolor', 'color', 'face', 'size', 'border', 'cellpadding',
+                         'cellspacing', 'target', 'rel', 'role', 'dir', 'lang')
+                    or attr.startswith('data-') or attr.startswith('aria-')):
+                del tag.attrs[attr]
+
+    # 6) 空白规范化（连续空格、全角空格、空行）
+    for node in soup.find_all(string=True):
+        s = str(node).replace('\xa0', ' ').replace('　', ' ')
+        node.replace_with(re.sub(r'[ \t\r\n]+', ' ', s))
+
+    return soup
+
 
 def target_date():
     """要制作的那一天的新闻：北京时间「当天」0:00 至抓取时刻。"""
@@ -20,6 +151,7 @@ class HuanqiuTimes(BasicNewsRecipe):
     encoding = 'utf-8'
     no_stylesheets = True
     no_images = True
+    extra_css = CLEAN_CSS
     remove_javascript = True
     use_embedded_content = False
     max_articles_per_feed = 30
@@ -132,6 +264,4 @@ class HuanqiuTimes(BasicNewsRecipe):
         raise Exception(f'No articles published on or after {target}')
 
     def postprocess_html(self, soup, first_fetch):
-        for tag in soup.find_all(['img', 'picture', 'source', 'video', 'iframe']):
-            tag.decompose()
-        return soup
+        return tidy_article(self, soup)
