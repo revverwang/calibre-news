@@ -4,7 +4,7 @@ run-name: 'Calibre News Delivery: ${{ github.ref_name }}'
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 22 * * *'
+    - cron: '0 10 * * *'  # UTC 10:00 = 北京时间 18:00
   # push:
   #   branches: ['master']
 
@@ -149,7 +149,7 @@ jobs:
         run: |
           set -e
           # 文件名用「内容日期」(北京时间昨天)，与定时运行时刻无关
-          today=$(TZ=Asia/Shanghai date -d 'yesterday' +%F)
+          today=$(TZ=Asia/Shanghai date +%F)
           mkdir -p docs/books
           for f in "$output"/*; do
             [ -f "$f" ] || continue
