@@ -65,7 +65,8 @@ _BYLINE_TAIL = re.compile(
 
 
 def _tokens(tag):
-    vals = list(tag.get('class') or []) + [tag.get('id') or '']
+    attrs = tag.attrs or {}
+    vals = list(attrs.get('class') or []) + [attrs.get('id') or '']
     out = []
     for v in vals:
         out.extend([t for t in re.split(r'[-_\s]+', str(v).lower()) if t])
@@ -74,23 +75,29 @@ def _tokens(tag):
 
 def tidy_article(recipe, soup):
     """剔除图片/广告/推荐位，清掉内联样式，只留干净的文章正文。"""
+    import html as _html
     from bs4 import BeautifulSoup
 
-    # 0) 部分站点（如环球网）把正文作为转义 HTML 塞进 <textarea>，不还原就会显示成标签文本
+    # 0) 部分站点（如环球网）把正文作为「转义后的 HTML」塞进 <textarea>，必须先还原
     for ta in soup.find_all('textarea'):
-        raw = ta.get_text() or ''
+        raw = ta.decode_contents() or ''
+        raw = _html.unescape(raw).strip()
         if '<' in raw:
             frag = BeautifulSoup(raw, 'html.parser')
             box = soup.new_tag('div')
             for child in list(frag.contents):
                 box.append(child.extract())
             ta.replace_with(box)
+        elif raw:
+            p = soup.new_tag('p')
+            p.string = raw
+            ta.replace_with(p)
         else:
             ta.decompose()
 
     # 1) 广告/分享/推荐/导航等容器整块删除
     for tag in soup.find_all(True):
-        if tag.name in ('html', 'body'):
+        if tag.name in ('html', 'body') or tag.attrs is None:
             continue
         toks = _tokens(tag)
         if toks and any(t in _JUNK_TOKENS for t in toks):
@@ -106,6 +113,8 @@ def tidy_article(recipe, soup):
 
     # 3) 图注、版权署名、编辑署名等零碎短段
     for tag in soup.find_all(['p', 'div', 'span', 'em', 'strong', 'small']):
+        if tag.attrs is None:
+            continue
         txt = tag.get_text(' ', strip=True)
         if not txt or len(txt) > 130:
             continue
@@ -117,11 +126,15 @@ def tidy_article(recipe, soup):
     for _ in range(3):
         for tag in soup.find_all(['p', 'div', 'span', 'section', 'article',
                                   'em', 'strong', 'b', 'i', 'li', 'h1', 'h2', 'h3', 'h4']):
+            if tag.attrs is None:
+                continue
             if not tag.get_text(strip=True) and not tag.find('br'):
                 tag.decompose()
 
     # 5) 内联样式/宽度/颜色等一律清掉，交给统一 CSS 接管
     for tag in soup.find_all(True):
+        if tag.attrs is None:
+            continue
         for attr in list(tag.attrs):
             if (attr in ('style', 'class', 'id', 'width', 'height', 'align', 'valign',
                          'bgcolor', 'color', 'face', 'size', 'border', 'cellpadding',
@@ -129,18 +142,13 @@ def tidy_article(recipe, soup):
                     or attr.startswith('data-') or attr.startswith('aria-')):
                 del tag.attrs[attr]
 
-    # 6) 空白规范化（连续空格、全角空格、空行）
+    # 6) 空白规范化、去掉“原标题：”这类编辑前缀
     for node in soup.find_all(string=True):
         s = str(node).replace('\xa0', ' ').replace('　', ' ')
-        node.replace_with(re.sub(r'[ \t\r\n]+', ' ', s))
+        s = re.sub(r'^\s*原标题[：:]\s*', '', s)
+        node.replace_with(re.sub(r'[ \t\r\n]{2,}', ' ', s))
 
     return soup
-
-
-def target_date():
-    """要制作的那一天的新闻：北京时间「当天」0:00 至抓取时刻。"""
-    bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
-    return bj_now.date()
 
 
 class HuanqiuTimes(BasicNewsRecipe):
