@@ -47,7 +47,7 @@ class LianheZaobao(BasicNewsRecipe):
 
     def parse_index(self):
         target = target_date()
-        self.log(f'Target date (Beijing yesterday): {target}')
+        self.log(f'Target date (Beijing today): {target}')
 
         # 1) 收集候选（丢弃比目标日期更旧的）
         buckets = []
