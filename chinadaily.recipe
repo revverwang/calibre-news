@@ -124,6 +124,36 @@ def tidy_article(recipe, soup):
 
     return soup
 
+
+CLEAN_CSS = u"""html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Charter", "Iowan Old Style", "Palatino", Georgia, serif;
+  color: #111;
+  line-height: 1.62;
+  text-align: justify;
+  margin: 0.9em 1em 1.6em;
+  word-wrap: break-word;
+}
+h1, h2, h3, h4, h5 {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  text-align: left; line-height: 1.35; page-break-after: avoid;
+}
+h1 { font-size: 1.46em; font-weight: bold; margin: 0 0 0.85em; padding-bottom: 0.45em; border-bottom: 2px solid #333; }
+h2 { font-size: 1.16em; font-weight: bold; margin: 1.9em 0 0.7em; padding-left: 0.55em; border-left: 4px solid #777; }
+h3 { font-size: 1.05em; font-weight: bold; margin: 1.6em 0 0.55em; }
+p { margin: 0 0 0.85em; text-indent: 0; orphans: 2; widows: 2; }
+blockquote { margin: 1.1em 1.4em; padding: 0.2em 0 0.2em 0.9em; border-left: 3px solid #bbb; color: #333; font-style: italic; }
+ul, ol { margin: 0.7em 0 0.9em 1.3em; padding: 0; }
+li { margin: 0 0 0.35em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.92em; }
+th, td { border: 1px solid #bbb; padding: 0.4em 0.5em; text-align: left; vertical-align: top; }
+th { background: #f2f2f2; font-weight: bold; }
+a { color: inherit; text-decoration: none; }
+hr { border: 0; border-top: 1px solid #ccc; margin: 1.6em 0; }
+sup { font-size: 0.72em; }
+img, figure, figcaption, picture, video, iframe, object, embed { display: none !important; }
+.calibre_navbar, .calibre_footer { display: none !important; }"""
+
 class ChinaDaily(BasicNewsRecipe):
     title = 'China Daily'
     __author__ = 'Calibre News Delivery (custom)'
@@ -132,6 +162,8 @@ class ChinaDaily(BasicNewsRecipe):
     encoding = 'utf-8'
     no_stylesheets = True
     no_images = True
+    # calibre 生成 epub 的 stylesheet.css 取自 template_css，extra_css 只影响 HTML 模板
+    template_css = BasicNewsRecipe.template_css + "\n" + CLEAN_CSS
     remove_javascript = True
     use_embedded_content = False
     max_articles_per_feed = 40
