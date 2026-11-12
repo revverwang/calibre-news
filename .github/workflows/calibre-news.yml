@@ -152,6 +152,11 @@ jobs:
           mkdir -p docs/books
           for f in "$output"/*; do
             [ -f "$f" ] || continue
+            bytes=$(stat -c %s "$f")
+            if [ "$bytes" -gt 19000000 ]; then
+              echo "Skip oversized ebook (>19MB, jsDelivr limit): $(basename "$f") ${bytes}B"
+              continue
+            fi
             cp "$f" "docs/books/${today}-$(basename "$f")"
           done
           touch docs/.nojekyll
