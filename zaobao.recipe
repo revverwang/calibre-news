@@ -17,12 +17,11 @@ class LianheZaobao(BasicNewsRecipe):
     language = 'zh_CN'
     encoding = 'utf-8'
     no_stylesheets = True
-    no_images = True  # 图片会使 epub 超过 jsDelivr 20MB 单文件上限
+    no_images = True
     remove_javascript = True
     use_embedded_content = False
-    max_articles_per_feed = 15
+    max_articles_per_feed = 20
     simultaneous_downloads = 5
-    scale_news_images_to_device = True
     keep_only_tags = [dict(name='article')]
     remove_tags = [
         dict(name='div', attrs={'id': re.compile('read-on-app|related|newsletter')}),
@@ -30,7 +29,10 @@ class LianheZaobao(BasicNewsRecipe):
         dict(name='style'),
     ]
 
-    USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+    USER_AGENT = (
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+    )
     BASE = 'https://www.zaobao.com.sg'
     # 文章 URL 自带日期：/news/china/story20261112-9984446
     ART_RE = re.compile(r'^https://www\.zaobao\.com\.sg(/[a-z-]+/[a-z-]+/story(\d{8})-\d+)')
@@ -46,7 +48,9 @@ class LianheZaobao(BasicNewsRecipe):
     def parse_index(self):
         target = target_date()
         self.log(f'Target date (Beijing yesterday): {target}')
-        feeds = []
+
+        # 1) 收集候选（丢弃比目标日期更旧的）
+        buckets = []
         for sec_title, sec_url in self.SECTIONS:
             cand = {}
             try:
@@ -69,7 +73,7 @@ class LianheZaobao(BasicNewsRecipe):
                     d = datetime.datetime.strptime(m.group(2), '%Y%m%d').date()
                 except ValueError:
                     continue
-                if d != target:
+                if d < target:
                     continue
                 title = (a.get('title') or '').strip()
                 if len(title) < 6:
@@ -86,18 +90,32 @@ class LianheZaobao(BasicNewsRecipe):
                             if len(candidate) >= 6:
                                 title = candidate
                                 break
-                if href not in cand or (title and len(title) > len(cand.get(href) or '')):
-                    cand[href] = title
-            articles = [
-                {'title': t or f'{sec_title}新闻', 'url': u, 'description': '', 'date': ''}
-                for u, t in cand.items()
-            ][: self.max_articles_per_feed]
-            self.log(f'{sec_title}: anchors={len(all_a)} kept={len(articles)} on {target}')
-            if articles:
-                feeds.append((sec_title, articles))
-        if not feeds:
-            raise Exception(f'No articles published on {target}')
-        return feeds
+                prev = cand.get(href)
+                if prev is None or (title and len(title) > len(prev[0] or '')):
+                    cand[href] = (title, d)
+            items = [(u, t, d) for u, (t, d) in cand.items()]
+            self.log(f'{sec_title}: anchors={len(all_a)} candidates={len(cand)}')
+            if items:
+                buckets.append((sec_title, items))
+
+        # 2) 严格取目标日期；若一篇都没有才回退到「昨天及更新」
+        for exact in (True, False):
+            feeds = []
+            for sec_title, items in buckets:
+                arts = [
+                    {'title': t or f'{sec_title}新闻', 'url': u, 'description': '', 'date': ''}
+                    for u, t, d in items
+                    if (d == target) or not exact
+                ]
+                tag = '' if exact else ' (fallback)'
+                self.log(f'{sec_title}: {len(arts)}/{len(items)} on {target}{tag}')
+                if arts:
+                    feeds.append((sec_title, arts[: self.max_articles_per_feed]))
+            if feeds:
+                if not exact:
+                    self.log(f'FALLBACK: nothing published on {target}, using latest available')
+                return feeds
+        raise Exception(f'No articles published on or after {target}')
 
     def postprocess_html(self, soup, first_fetch):
         # no_images 在新版 Calibre 里不再生效，手动剔除图片/视频，避免 epub 撑爆
