@@ -3,16 +3,32 @@
   <id>urn:uuid:de004250-f591-5e2f-b983-e1600093d3e2</id>
   <title>Calibre 每日新闻</title>
   <subtitle>每天自动抓取并转制的新闻电子书</subtitle>
-  <updated>2026-11-12T10:39:06Z</updated>
+  <updated>2026-11-12T10:41:38Z</updated>
   <author><name>Calibre News Delivery</name></author>
   <link rel="self" href="https://revverwang.github.io/calibre-news/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://revverwang.github.io/calibre-news/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <entry>
+    <title>联合早报 [Thu, 12 Nov 2026]</title>
+    <id>urn:uuid:2ba0bee3-91fd-58c6-96d7-433ec9d83860</id>
+    <updated>2026-11-11T00:00:00Z</updated>
+    <author><name>Calibre News Delivery</name></author>
+    <content type="text">EPUB · 333 KB</content>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-11-%E8%81%94%E5%90%88%E6%97%A9%E6%8A%A5%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
+  </entry>
+  <entry>
+    <title>环球时报 [Thu, 12 Nov 2026]</title>
+    <id>urn:uuid:4041d1d5-ec78-5050-87c7-3f4ce31139e6</id>
+    <updated>2026-11-11T00:00:00Z</updated>
+    <author><name>Calibre News Delivery</name></author>
+    <content type="text">EPUB · 20 KB</content>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-11-%E7%8E%AF%E7%90%83%E6%97%B6%E6%8A%A5%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
+  </entry>
   <entry>
     <title>China Daily [Thu, 12 Nov 2026]</title>
     <id>urn:uuid:e37e5f80-55f0-5fbf-a5f8-7b948636e9e0</id>
     <updated>2026-11-11T00:00:00Z</updated>
     <author><name>Calibre News Delivery</name></author>
-    <content type="text">EPUB · 162 KB</content>
+    <content type="text">EPUB · 267 KB</content>
     <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-11-China%20Daily%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
   </entry>
 </feed>
