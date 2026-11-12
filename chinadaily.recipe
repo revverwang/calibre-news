@@ -4,6 +4,12 @@ import datetime
 from calibre.web.feeds.news import BasicNewsRecipe
 
 
+def target_date():
+    """要制作的那一天的新闻：北京时间「昨天」全程 0:00-24:00。"""
+    bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
+    return bj_now.date() - datetime.timedelta(days=1)
+
+
 class ChinaDaily(BasicNewsRecipe):
     title = 'China Daily'
     __author__ = 'Calibre News Delivery (custom)'
@@ -11,11 +17,11 @@ class ChinaDaily(BasicNewsRecipe):
     language = 'en'
     encoding = 'utf-8'
     no_stylesheets = True
+    no_images = True
     remove_javascript = True
     use_embedded_content = False
-    max_articles_per_feed = 25
+    max_articles_per_feed = 40
     simultaneous_downloads = 5
-    scale_news_images_to_device = True
     keep_only_tags = [dict(id='Content')]
     remove_tags = [
         dict(name='div', attrs={'class': re.compile('TopHead|Art_Topic|Share|keyword')}),
@@ -24,11 +30,10 @@ class ChinaDaily(BasicNewsRecipe):
         dict(name='style'),
     ]
 
-    # 文章 URL 形如 /a/202611/10/WS6af2....html，从中解析日期做新鲜度过滤
+    # 文章 URL 形如 /a/202611/10/WS6af2....html，日期就在 URL 里
     ART_RE = re.compile(
         r'^(https?://www\.chinadaily\.com\.cn/a/(\d{6})/(\d{2})/WS\w+\.html)$'
     )
-    DAYS = 2  # 只保留最近 2 天的文章
 
     SECTIONS = [
         ('Top News', 'https://www.chinadaily.com.cn/'),
@@ -39,18 +44,19 @@ class ChinaDaily(BasicNewsRecipe):
         ('Culture', 'https://www.chinadaily.com.cn/culture'),
     ]
 
-    def _fresh(self, url):
+    def _article_date(self, url):
         m = self.ART_RE.match(url)
         if not m:
-            return False
+            return None
         yyyymm, dd = m.group(2), m.group(3)
         try:
-            d = datetime.date(int(yyyymm[:4]), int(yyyymm[4:6]), int(dd))
+            return datetime.date(int(yyyymm[:4]), int(yyyymm[4:6]), int(dd))
         except ValueError:
-            return False
-        return (datetime.date.today() - d).days <= self.DAYS
+            return None
 
     def parse_index(self):
+        target = target_date()
+        self.log(f'Target date (Beijing yesterday): {target}')
         feeds, seen = [], set()
         for sec_title, sec_url in self.SECTIONS:
             articles = []
@@ -60,23 +66,28 @@ class ChinaDaily(BasicNewsRecipe):
                 self.log(f'Section failed: {sec_url} ({e})')
                 continue
             for a in soup.findAll('a', href=True):
-                href = a['href']
+                href = a['href'].strip()
                 if href.startswith('//'):
                     href = 'https:' + href
                 if not self.ART_RE.match(href) or href in seen:
                     continue
-                if not self._fresh(href):
+                if self._article_date(href) != target:
                     continue
-                seen.add(href)
                 t = (a.get('title') or self.tag_to_string(a)).strip()
                 if len(t) < 8:
                     continue
+                seen.add(href)
                 articles.append(
                     {'title': t, 'url': href, 'description': '', 'date': ''}
                 )
+            self.log(f'{sec_title}: {len(articles)} articles on {target}')
             if articles:
-                self.log(f'{sec_title}: {len(articles)} articles')
                 feeds.append((sec_title, articles[: self.max_articles_per_feed]))
         if not feeds:
-            raise EmptyIndex('No fresh articles found')
+            raise Exception(f'No articles published on {target}')
         return feeds
+
+    def postprocess_html(self, soup, first_fetch):
+        for tag in soup.find_all(['img', 'picture', 'source', 'video', 'iframe']):
+            tag.decompose()
+        return soup
