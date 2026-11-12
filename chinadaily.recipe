@@ -57,35 +57,51 @@ class ChinaDaily(BasicNewsRecipe):
     def parse_index(self):
         target = target_date()
         self.log(f'Target date (Beijing yesterday): {target}')
-        feeds, seen = [], set()
+
+        # 1) 收集候选（丢弃比目标日期更旧的，保证绝不混入前天的旧闻）
+        buckets, seen = [], set()
         for sec_title, sec_url in self.SECTIONS:
-            articles = []
             try:
                 soup = self.index_to_soup(sec_url)
             except Exception as e:
                 self.log(f'Section failed: {sec_url} ({e})')
                 continue
+            items = []
             for a in soup.findAll('a', href=True):
                 href = a['href'].strip()
                 if href.startswith('//'):
                     href = 'https:' + href
                 if not self.ART_RE.match(href) or href in seen:
                     continue
-                if self._article_date(href) != target:
-                    continue
                 t = (a.get('title') or self.tag_to_string(a)).strip()
                 if len(t) < 8:
                     continue
+                d = self._article_date(href)
+                if d is None or d < target:
+                    continue
                 seen.add(href)
-                articles.append(
-                    {'title': t, 'url': href, 'description': '', 'date': ''}
-                )
-            self.log(f'{sec_title}: {len(articles)} articles on {target}')
-            if articles:
-                feeds.append((sec_title, articles[: self.max_articles_per_feed]))
-        if not feeds:
-            raise Exception(f'No articles published on {target}')
-        return feeds
+                items.append((href, t, d))
+            if items:
+                buckets.append((sec_title, items))
+
+        # 2) 严格取目标日期；若一篇都没有才回退到「昨天及更新」
+        for exact in (True, False):
+            feeds = []
+            for sec_title, items in buckets:
+                arts = [
+                    {'title': t, 'url': u, 'description': '', 'date': ''}
+                    for u, t, d in items
+                    if (d == target) or not exact
+                ]
+                tag = '' if exact else ' (fallback)'
+                self.log(f'{sec_title}: {len(arts)}/{len(items)} articles on {target}{tag}')
+                if arts:
+                    feeds.append((sec_title, arts[: self.max_articles_per_feed]))
+            if feeds:
+                if not exact:
+                    self.log(f'FALLBACK: nothing published on {target}, using latest available')
+                return feeds
+        raise Exception(f'No articles published on or after {target}')
 
     def postprocess_html(self, soup, first_fetch):
         for tag in soup.find_all(['img', 'picture', 'source', 'video', 'iframe']):
