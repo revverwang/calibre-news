@@ -143,7 +143,7 @@ jobs:
       - name: Publishing OPDS Catalog
         if: ${{ success() }}
         env:
-          OPDS_BASE_JSD: https://gcore.jsdelivr.net/gh/revverwang/calibre-news@master/docs
+          OPDS_BASE_JSD: https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs
           OPDS_BASE_PAGES: https://revverwang.github.io/calibre-news
           RETENTION_DAYS: '7'
         run: |
