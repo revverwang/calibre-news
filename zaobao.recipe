@@ -1,0 +1,72 @@
+import re
+import datetime
+
+from calibre.web.feeds.news import BasicNewsRecipe
+
+
+class LianheZaobao(BasicNewsRecipe):
+    title = '联合早报'
+    __author__ = 'Calibre News Delivery (custom)'
+    description = '新加坡《联合早报》每日精选：新加坡 / 中国 / 国际 / 即时新闻'
+    language = 'zh_CN'
+    encoding = 'utf-8'
+    no_stylesheets = True
+    remove_javascript = True
+    use_embedded_content = False
+    max_articles_per_feed = 25
+    simultaneous_downloads = 5
+    scale_news_images_to_device = True
+    keep_only_tags = [dict(name='article')]
+    remove_tags = [
+        dict(name='div', attrs={'id': re.compile('read-on-app|related|newsletter')}),
+        dict(name='script'),
+        dict(name='style'),
+    ]
+
+    BASE = 'https://www.zaobao.com.sg'
+    # 文章 URL 自带日期：/news/china/story20261112-9984446
+    ART_RE = re.compile(r'^(?:https://www\.zaobao\.com\.sg)?(/[a-z-]+/[a-z-]+/story(\d{8})-\d+)$')
+    DAYS = 2
+
+    SECTIONS = [
+        ('新加坡', BASE + '/news/singapore'),
+        ('中国', BASE + '/news/china'),
+        ('国际', BASE + '/news/world'),
+        ('即时·中国', BASE + '/realtime/china'),
+        ('即时·国际', BASE + '/realtime/world'),
+    ]
+
+    def parse_index(self):
+        today = datetime.date.today()
+        feeds, seen = [], set()
+        for sec_title, sec_url in self.SECTIONS:
+            articles = []
+            try:
+                soup = self.index_to_soup(sec_url)
+            except Exception as e:
+                self.log(f'Section failed: {sec_url} ({e})')
+                continue
+            for a in soup.findAll('a', href=True):
+                href = a['href']
+                m = self.ART_RE.match(href)
+                if not m or href in seen:
+                    continue
+                try:
+                    d = datetime.datetime.strptime(m.group(2), '%Y%m%d').date()
+                except ValueError:
+                    continue
+                if (today - d).days > self.DAYS:
+                    continue
+                seen.add(href)
+                t = (a.get('title') or self.tag_to_string(a)).strip()
+                if len(t) < 6:
+                    continue
+                articles.append(
+                    {'title': t, 'url': self.BASE + m.group(1), 'description': '', 'date': ''}
+                )
+            if articles:
+                self.log(f'{sec_title}: {len(articles)} articles')
+                feeds.append((sec_title, articles[: self.max_articles_per_feed]))
+        if not feeds:
+            raise EmptyIndex('No fresh articles found')
+        return feeds
