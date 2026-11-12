@@ -48,7 +48,8 @@ class LianheZaobao(BasicNewsRecipe):
                 self.log(f'Section failed: {sec_url} ({e})')
                 continue
             all_a = soup.findAll('a', href=True)
-            self.log(f'  sample hrefs: {[a["href"] for a in all_a[:3]]}')
+            story_a = [a['href'] for a in all_a if 'story' in a['href']]
+            self.log(f'  story links: {len(story_a)} sample: {story_a[:3]}')
             for a in all_a:
                 href = a['href'].strip()
                 if href.startswith('//'):
