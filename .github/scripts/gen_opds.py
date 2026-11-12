@@ -11,10 +11,13 @@ import uuid
 BOOKS = pathlib.Path("docs/books")
 BOOKS.mkdir(parents=True, exist_ok=True)
 
-# 同时产出两份目录：jsDelivr 源（国内可访问）与 GitHub Pages 源（实时）
+# 三份目录，各自的书链接都指向与自身相同的源，避免「目录在一处、书在另一处」的缓存错配：
+#   catalog.xml     → GitHub Pages（主推，部署 1-2 分钟生效）
+#   opds.xml        → jsDelivr（国内可访问，但同步 GitHub 提交有延迟）
+#   opds-pages.xml  → GitHub Pages（兼容旧地址）
 BASES = {
+    "catalog.xml": os.environ.get("OPDS_BASE_PAGES", "").rstrip("/"),
     "opds.xml": os.environ.get("OPDS_BASE_JSD", "").rstrip("/"),
-    "catalog.xml": os.environ.get("OPDS_BASE_JSD", "").rstrip("/"),
     "opds-pages.xml": os.environ.get("OPDS_BASE_PAGES", "").rstrip("/"),
 }
 
@@ -47,7 +50,7 @@ now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"
 feed_id = f"urn:uuid:{uuid.uuid5(NS, 'calibre-news-feed')}"
 
 
-def build(base: str) -> str:
+def build(base: str, self_name: str) -> str:
     entries = []
     for p in books:
         stem = p.stem
@@ -78,7 +81,7 @@ def build(base: str) -> str:
     <link rel="http://opds-spec.org/acquisition" type="{mime}" href="{html.escape(href)}"/>
   </entry>"""
         )
-    self_href = f"{base}/opds.xml" if base else "opds.xml"
+    self_href = f"{base}/{self_name}" if base else self_name
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog">
   <id>{feed_id}</id>
@@ -94,7 +97,7 @@ def build(base: str) -> str:
 
 
 for name, base in BASES.items():
-    pathlib.Path("docs", name).write_text(build(base), encoding="utf-8")
+    pathlib.Path("docs", name).write_text(build(base, name), encoding="utf-8")
     print(f"generated docs/{name} (base={base!r}, books={len(books)})")
 
 # 网页版索引，方便手机浏览器直接点开
