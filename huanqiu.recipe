@@ -15,14 +15,14 @@ def target_date():
 class HuanqiuTimes(BasicNewsRecipe):
     title = '环球时报'
     __author__ = 'Calibre News Delivery (custom)'
-    description = '环球时报（huanqiu.com）每日精选：首页 / 中国 / 世界 / 军事 / 台海 / 财经'
+    description = '环球时报（huanqiu.com）每日精选：只保留发布当天的要闻'
     language = 'zh_CN'
     encoding = 'utf-8'
     no_stylesheets = True
     no_images = True
     remove_javascript = True
     use_embedded_content = False
-    max_articles_per_feed = 25
+    max_articles_per_feed = 30
     simultaneous_downloads = 5
     keep_only_tags = [dict(attrs={'class': 'article-content'})]
     remove_tags = [
@@ -36,13 +36,14 @@ class HuanqiuTimes(BasicNewsRecipe):
 
     # 文章链接：https://<频道>.huanqiu.com/article/<id>，ID 不含日期
     ART_RE = re.compile(
-        r'^(https?://(?:www|china|world|mil|taiwan|finance)\.huanqiu\.com/article/\w+)$'
+        r'^(https?://(?:www|china|world|mil|taiwan|finance|tech|ent|sports|auto|health)'
+        r'\.huanqiu\.com/article/\w+)$'
     )
-    # 每个频道最多检查多少条候选（首页靠前的通常最新）
+    # 每个来源最多检查多少条候选
     CHECK_LIMIT = 60
 
     # 只有 www 首页是静态 HTML，其余频道页（china/world/mil/...）是 JS 渲染的空壳，
-    # 抓不到文章链接，因此只保留首页作为候选来源（约 49 篇，覆盖最近约 10 小时）
+    # 抓不到文章链接，因此只保留首页作为候选来源（约 45-50 篇，覆盖最近约 10 小时）
     SECTIONS = [
         ('首页要闻', 'https://www.huanqiu.com/'),
     ]
@@ -69,7 +70,7 @@ class HuanqiuTimes(BasicNewsRecipe):
         target = target_date()
         self.log(f'Target date (Beijing yesterday): {target}')
 
-        # 1) 先收集各频道候选
+        # 1) 收集候选
         buckets, seen = [], set()
         for sec_title, sec_url in self.SECTIONS:
             try:
@@ -103,20 +104,32 @@ class HuanqiuTimes(BasicNewsRecipe):
         found = sum(1 for d in dates.values() if d is not None)
         self.log(f'Checked {len(urls)} articles, publish time resolved: {found}')
 
-        # 3) 只保留目标日期
-        feeds = []
+        # 3) 丢弃比目标日期更旧的（时间解析失败的一并丢弃，避免混入旧闻）
+        kept_buckets = []
         for sec_title, cand in buckets:
-            arts = [
-                {'title': t, 'url': u, 'description': '', 'date': ''}
-                for u, t in cand
-                if dates.get(u) == target
-            ]
-            self.log(f'{sec_title}: {len(arts)}/{len(cand)} published on {target}')
-            if arts:
-                feeds.append((sec_title, arts[: self.max_articles_per_feed]))
-        if not feeds:
-            raise Exception(f'No articles published on {target}')
-        return feeds
+            items = [(u, t, dates[u]) for u, t in cand if dates.get(u) is not None and dates[u] >= target]
+            self.log(f'{sec_title}: {len(items)}/{len(cand)} on or after {target}')
+            if items:
+                kept_buckets.append((sec_title, items))
+
+        # 4) 严格取目标日期；若一篇都没有才回退到「昨天及更新」
+        for exact in (True, False):
+            feeds = []
+            for sec_title, items in kept_buckets:
+                arts = [
+                    {'title': t, 'url': u, 'description': '', 'date': ''}
+                    for u, t, d in items
+                    if (d == target) or not exact
+                ]
+                tag = '' if exact else ' (fallback)'
+                self.log(f'{sec_title}: {len(arts)} published on {target}{tag}')
+                if arts:
+                    feeds.append((sec_title, arts[: self.max_articles_per_feed]))
+            if feeds:
+                if not exact:
+                    self.log(f'FALLBACK: nothing published on {target}, using latest available')
+                return feeds
+        raise Exception(f'No articles published on or after {target}')
 
     def postprocess_html(self, soup, first_fetch):
         for tag in soup.find_all(['img', 'picture', 'source', 'video', 'iframe']):
