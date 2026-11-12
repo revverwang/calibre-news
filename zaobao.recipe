@@ -11,9 +11,10 @@ class LianheZaobao(BasicNewsRecipe):
     language = 'zh_CN'
     encoding = 'utf-8'
     no_stylesheets = True
+    no_images = True  # 图片会使 epub 超过 jsDelivr 20MB 单文件上限
     remove_javascript = True
     use_embedded_content = False
-    max_articles_per_feed = 25
+    max_articles_per_feed = 15
     simultaneous_downloads = 5
     scale_news_images_to_device = True
     keep_only_tags = [dict(name='article')]
