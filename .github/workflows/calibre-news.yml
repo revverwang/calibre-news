@@ -163,7 +163,7 @@ jobs:
             echo 'No catalog changes'
           else
             git commit -m "chore: publish news ${today}"
-            git push
+            git push origin HEAD:master
           fi
       - name: Storing Ebook
         if: ${{ success() }}
