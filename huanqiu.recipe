@@ -39,15 +39,12 @@ class HuanqiuTimes(BasicNewsRecipe):
         r'^(https?://(?:www|china|world|mil|taiwan|finance)\.huanqiu\.com/article/\w+)$'
     )
     # 每个频道最多检查多少条候选（首页靠前的通常最新）
-    CHECK_LIMIT = 40
+    CHECK_LIMIT = 60
 
+    # 只有 www 首页是静态 HTML，其余频道页（china/world/mil/...）是 JS 渲染的空壳，
+    # 抓不到文章链接，因此只保留首页作为候选来源（约 49 篇，覆盖最近约 10 小时）
     SECTIONS = [
         ('首页要闻', 'https://www.huanqiu.com/'),
-        ('中国', 'https://china.huanqiu.com'),
-        ('世界', 'https://world.huanqiu.com'),
-        ('军事', 'https://mil.huanqiu.com'),
-        ('台海', 'https://taiwan.huanqiu.com'),
-        ('财经', 'https://finance.huanqiu.com'),
     ]
 
     def _pub_date(self, url):
