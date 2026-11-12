@@ -123,6 +123,11 @@ jobs:
           if [ $count -eq 0 ]; then
             echo 'No ebook needs send'; exit 1
           fi
+      - name: Polishing Ebook
+        if: ${{ success() }}
+        run: |
+          set -e
+          python3 .github/scripts/strip_navbar.py "$output"
       - name: Sending Ebook
         if: ${{ success() }}
         run: |
