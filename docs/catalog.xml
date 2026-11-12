@@ -3,18 +3,10 @@
   <id>urn:uuid:de004250-f591-5e2f-b983-e1600093d3e2</id>
   <title>Calibre 每日新闻</title>
   <subtitle>每天自动抓取并转制的新闻电子书</subtitle>
-  <updated>2026-11-12T10:30:05Z</updated>
+  <updated>2026-11-12T10:35:41Z</updated>
   <author><name>Calibre News Delivery</name></author>
   <link rel="self" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-  <entry>
-    <title>联合早报 [Thu, 12 Nov 2026]</title>
-    <id>urn:uuid:9473e0ba-378b-569c-baaf-14c1df82afaa</id>
-    <updated>2026-11-12T00:00:00Z</updated>
-    <author><name>Calibre News Delivery</name></author>
-    <content type="text">EPUB · 69014 KB</content>
-    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/books/2026-11-12-%E8%81%94%E5%90%88%E6%97%A9%E6%8A%A5%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
-  </entry>
   <entry>
     <title>环球时报 [Thu, 12 Nov 2026]</title>
     <id>urn:uuid:411a38de-fa48-54e3-a2c7-7ac0f60fbd74</id>
@@ -30,5 +22,13 @@
     <author><name>Calibre News Delivery</name></author>
     <content type="text">EPUB · 9301 KB</content>
     <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/books/2026-11-12-China%20Daily%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
+  </entry>
+  <entry>
+    <title>China Daily [Thu, 12 Nov 2026]</title>
+    <id>urn:uuid:e37e5f80-55f0-5fbf-a5f8-7b948636e9e0</id>
+    <updated>2026-11-11T00:00:00Z</updated>
+    <author><name>Calibre News Delivery</name></author>
+    <content type="text">EPUB · 175 KB</content>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/books/2026-11-11-China%20Daily%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
   </entry>
 </feed>
