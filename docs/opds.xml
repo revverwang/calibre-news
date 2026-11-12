@@ -5,14 +5,14 @@
   <subtitle>每天自动抓取并转制的新闻电子书</subtitle>
   <updated>2026-11-12T07:54:04Z</updated>
   <author><name>Calibre News Delivery</name></author>
-  <link rel="self" href="https://gcore.jsdelivr.net/gh/revverwang/calibre-news@master/docs/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-  <link rel="start" href="https://gcore.jsdelivr.net/gh/revverwang/calibre-news@master/docs/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="self" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="start" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <entry>
     <title>Slashdot.org [Thu, 12 Nov 2026]</title>
     <id>urn:uuid:bcf1f30f-ce4f-55f5-ac01-05db0eed1d60</id>
     <updated>2026-11-12T00:00:00Z</updated>
     <author><name>Calibre News Delivery</name></author>
     <content type="text">EPUB · 837 KB</content>
-    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://gcore.jsdelivr.net/gh/revverwang/calibre-news@master/docs/books/2026-11-12-Slashdot.org%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://testingcf.jsdelivr.net/gh/revverwang/calibre-news@master/docs/books/2026-11-12-Slashdot.org%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
   </entry>
 </feed>
