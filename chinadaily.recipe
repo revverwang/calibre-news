@@ -1,0 +1,82 @@
+import re
+import datetime
+
+from calibre.web.feeds.news import BasicNewsRecipe
+
+
+class ChinaDaily(BasicNewsRecipe):
+    title = 'China Daily'
+    __author__ = 'Calibre News Delivery (custom)'
+    description = 'China Daily 每日精选：要闻 / China / World / Business / Opinion / Culture'
+    language = 'en'
+    encoding = 'utf-8'
+    no_stylesheets = True
+    remove_javascript = True
+    use_embedded_content = False
+    max_articles_per_feed = 25
+    simultaneous_downloads = 5
+    scale_news_images_to_device = True
+    keep_only_tags = [dict(id='Content')]
+    remove_tags = [
+        dict(name='div', attrs={'class': re.compile('TopHead|Art_Topic|Share|keyword')}),
+        dict(name='div', attrs={'id': re.compile('Footer|nav')}),
+        dict(name='script'),
+        dict(name='style'),
+    ]
+
+    # 文章 URL 形如 /a/202611/10/WS6af2....html，从中解析日期做新鲜度过滤
+    ART_RE = re.compile(
+        r'^(https?://www\.chinadaily\.com\.cn/a/(\d{6})/(\d{2})/WS\w+\.html)$'
+    )
+    DAYS = 2  # 只保留最近 2 天的文章
+
+    SECTIONS = [
+        ('Top News', 'https://www.chinadaily.com.cn/'),
+        ('China', 'https://www.chinadaily.com.cn/china'),
+        ('World', 'https://www.chinadaily.com.cn/world'),
+        ('Business', 'https://www.chinadaily.com.cn/business'),
+        ('Opinion', 'https://www.chinadaily.com.cn/opinion'),
+        ('Culture', 'https://www.chinadaily.com.cn/culture'),
+    ]
+
+    def _fresh(self, url):
+        m = self.ART_RE.match(url)
+        if not m:
+            return False
+        yyyymm, dd = m.group(2), m.group(3)
+        try:
+            d = datetime.date(int(yyyymm[:4]), int(yyyymm[4:6]), int(dd))
+        except ValueError:
+            return False
+        return (datetime.date.today() - d).days <= self.DAYS
+
+    def parse_index(self):
+        feeds, seen = [], set()
+        for sec_title, sec_url in self.SECTIONS:
+            articles = []
+            try:
+                soup = self.index_to_soup(sec_url)
+            except Exception as e:
+                self.log(f'Section failed: {sec_url} ({e})')
+                continue
+            for a in soup.findAll('a', href=True):
+                href = a['href']
+                if href.startswith('//'):
+                    href = 'https:' + href
+                if not self.ART_RE.match(href) or href in seen:
+                    continue
+                if not self._fresh(href):
+                    continue
+                seen.add(href)
+                t = (a.get('title') or self.tag_to_string(a)).strip()
+                if len(t) < 8:
+                    continue
+                articles.append(
+                    {'title': t, 'url': href, 'description': '', 'date': ''}
+                )
+            if articles:
+                self.log(f'{sec_title}: {len(articles)} articles')
+                feeds.append((sec_title, articles[: self.max_articles_per_feed]))
+        if not feeds:
+            raise EmptyIndex('No fresh articles found')
+        return feeds
