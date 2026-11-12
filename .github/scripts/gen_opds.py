@@ -14,6 +14,7 @@ BOOKS.mkdir(parents=True, exist_ok=True)
 # 同时产出两份目录：jsDelivr 源（国内可访问）与 GitHub Pages 源（实时）
 BASES = {
     "opds.xml": os.environ.get("OPDS_BASE_JSD", "").rstrip("/"),
+    "catalog.xml": os.environ.get("OPDS_BASE_JSD", "").rstrip("/"),
     "opds-pages.xml": os.environ.get("OPDS_BASE_PAGES", "").rstrip("/"),
 }
 
