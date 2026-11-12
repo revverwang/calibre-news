@@ -1,6 +1,15 @@
 import re
+import datetime
+import concurrent.futures
+import urllib.request
 
 from calibre.web.feeds.news import BasicNewsRecipe
+
+
+def target_date():
+    """要制作的那一天的新闻：北京时间「昨天」全程 0:00-24:00。"""
+    bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
+    return bj_now.date() - datetime.timedelta(days=1)
 
 
 class HuanqiuTimes(BasicNewsRecipe):
@@ -10,20 +19,27 @@ class HuanqiuTimes(BasicNewsRecipe):
     language = 'zh_CN'
     encoding = 'utf-8'
     no_stylesheets = True
+    no_images = True
     remove_javascript = True
     use_embedded_content = False
     max_articles_per_feed = 25
     simultaneous_downloads = 5
-    scale_news_images_to_device = True
     keep_only_tags = [dict(attrs={'class': 'article-content'})]
     remove_tags = [
         dict(name='script'),
         dict(name='style'),
     ]
+    USER_AGENT = (
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+    )
 
-    # 文章链接：https://<频道>.huanqiu.com/article/<id>，ID 不含日期，无法按 URL 过滤新鲜度，
-    # 依靠频道首页只展示最新内容 + 每期最多 25 篇控制
-    ART_RE = re.compile(r'^(https?://(?:www|china|world|mil|taiwan|finance)\.huanqiu\.com/article/\w+)$')
+    # 文章链接：https://<频道>.huanqiu.com/article/<id>，ID 不含日期
+    ART_RE = re.compile(
+        r'^(https?://(?:www|china|world|mil|taiwan|finance)\.huanqiu\.com/article/\w+)$'
+    )
+    # 每个频道最多检查多少条候选（首页靠前的通常最新）
+    CHECK_LIMIT = 40
 
     SECTIONS = [
         ('首页要闻', 'https://www.huanqiu.com/'),
@@ -34,31 +50,78 @@ class HuanqiuTimes(BasicNewsRecipe):
         ('财经', 'https://finance.huanqiu.com'),
     ]
 
+    def _pub_date(self, url):
+        """读取文章页内嵌的毫秒时间戳（textarea.article-time），换算成北京日期。"""
+        try:
+            req = urllib.request.Request(
+                url, headers={'User-Agent': self.USER_AGENT, 'Accept-Encoding': 'identity'}
+            )
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            with opener.open(req, timeout=20) as resp:
+                raw = resp.read(150000)
+            m = re.search(rb'article-time[^>]*>\s*(\d{10,13})', raw)
+            if not m:
+                return None
+            ts = int(m.group(1)[:10])
+            dt = datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
+            return (dt + datetime.timedelta(hours=8)).date()
+        except Exception:
+            return None
+
     def parse_index(self):
-        feeds, seen = [], set()
+        target = target_date()
+        self.log(f'Target date (Beijing yesterday): {target}')
+
+        # 1) 先收集各频道候选
+        buckets, seen = [], set()
         for sec_title, sec_url in self.SECTIONS:
-            articles = []
             try:
                 soup = self.index_to_soup(sec_url)
             except Exception as e:
                 self.log(f'Section failed: {sec_url} ({e})')
                 continue
+            cand = []
             for a in soup.findAll('a', href=True):
-                href = a['href']
+                href = a['href'].strip()
                 if href.startswith('//'):
                     href = 'https:' + href
                 if not self.ART_RE.match(href) or href in seen:
                     continue
-                seen.add(href)
                 t = (a.get('title') or self.tag_to_string(a)).strip()
                 if len(t) < 6:
                     continue
-                articles.append(
-                    {'title': t, 'url': href, 'description': '', 'date': ''}
-                )
-            if articles:
-                self.log(f'{sec_title}: {len(articles)} articles')
-                feeds.append((sec_title, articles[: self.max_articles_per_feed]))
+                seen.add(href)
+                cand.append((href, t))
+                if len(cand) >= self.CHECK_LIMIT:
+                    break
+            if cand:
+                buckets.append((sec_title, cand))
+
+        # 2) 并发取发布时间
+        urls = [u for _, c in buckets for u, _ in c]
+        dates = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+            for u, d in zip(urls, ex.map(self._pub_date, urls)):
+                dates[u] = d
+        found = sum(1 for d in dates.values() if d is not None)
+        self.log(f'Checked {len(urls)} articles, publish time resolved: {found}')
+
+        # 3) 只保留目标日期
+        feeds = []
+        for sec_title, cand in buckets:
+            arts = [
+                {'title': t, 'url': u, 'description': '', 'date': ''}
+                for u, t in cand
+                if dates.get(u) == target
+            ]
+            self.log(f'{sec_title}: {len(arts)}/{len(cand)} published on {target}')
+            if arts:
+                feeds.append((sec_title, arts[: self.max_articles_per_feed]))
         if not feeds:
-            raise EmptyIndex('No fresh articles found')
+            raise Exception(f'No articles published on {target}')
         return feeds
+
+    def postprocess_html(self, soup, first_fetch):
+        for tag in soup.find_all(['img', 'picture', 'source', 'video', 'iframe']):
+            tag.decompose()
+        return soup
