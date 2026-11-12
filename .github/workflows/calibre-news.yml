@@ -148,7 +148,8 @@ jobs:
           RETENTION_DAYS: '7'
         run: |
           set -e
-          today=$(date -u +%F)
+          # 文件名用「内容日期」(北京时间昨天)，与定时运行时刻无关
+          today=$(TZ=Asia/Shanghai date -d 'yesterday' +%F)
           mkdir -p docs/books
           for f in "$output"/*; do
             [ -f "$f" ] || continue
