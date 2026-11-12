@@ -68,7 +68,7 @@ class HuanqiuTimes(BasicNewsRecipe):
 
     def parse_index(self):
         target = target_date()
-        self.log(f'Target date (Beijing yesterday): {target}')
+        self.log(f'Target date (Beijing today): {target}')
 
         # 1) 收集候选
         buckets, seen = [], set()
