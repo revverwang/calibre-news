@@ -3,7 +3,7 @@
   <id>urn:uuid:de004250-f591-5e2f-b983-e1600093d3e2</id>
   <title>Calibre 每日新闻</title>
   <subtitle>每天自动抓取并转制的新闻电子书</subtitle>
-  <updated>2026-11-12T10:17:52Z</updated>
+  <updated>2026-11-12T10:21:30Z</updated>
   <author><name>Calibre News Delivery</name></author>
   <link rel="self" href="https://revverwang.github.io/calibre-news/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://revverwang.github.io/calibre-news/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
@@ -12,7 +12,7 @@
     <id>urn:uuid:411a38de-fa48-54e3-a2c7-7ac0f60fbd74</id>
     <updated>2026-11-12T00:00:00Z</updated>
     <author><name>Calibre News Delivery</name></author>
-    <content type="text">EPUB · 83 KB</content>
+    <content type="text">EPUB · 79 KB</content>
     <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-12-%E7%8E%AF%E7%90%83%E6%97%B6%E6%8A%A5%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
   </entry>
   <entry>
@@ -20,7 +20,7 @@
     <id>urn:uuid:ee3aa789-4837-5b79-83f1-5b130350f032</id>
     <updated>2026-11-12T00:00:00Z</updated>
     <author><name>Calibre News Delivery</name></author>
-    <content type="text">EPUB · 9311 KB</content>
+    <content type="text">EPUB · 9297 KB</content>
     <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-12-China%20Daily%20%5BThu%2C%2012%20Nov%202026%5D.epub"/>
   </entry>
 </feed>
