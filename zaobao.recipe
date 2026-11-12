@@ -3,6 +3,11 @@ import datetime
 
 from calibre.web.feeds.news import BasicNewsRecipe
 
+def target_date():
+    """要制作的那一天的新闻：北京时间「当天」0:00 至抓取时刻。"""
+    bj_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)
+    return bj_now.date()
+
 CLEAN_CSS = u"""html, body { margin: 0; padding: 0; }
 body {
   font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", serif;
@@ -147,7 +152,6 @@ def tidy_article(recipe, soup):
         node.replace_with(re.sub(r'[ \t\r\n]{2,}', ' ', s))
 
     return soup
-
 
 class LianheZaobao(BasicNewsRecipe):
     title = '联合早报'
