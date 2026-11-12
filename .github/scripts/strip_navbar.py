@@ -8,7 +8,7 @@ import pathlib
 import zipfile
 
 # calibre 的导航栏是一个无嵌套的 div，里面是 <hr> + 页脚段落 + 上/下一篇链接
-NAV = re.compile(r'<div class="calibre_navbar">.*?</div>', re.S)
+NAV = re.compile(r'<div class="calibre_navbar\d*">.*?</div>', re.S)
 
 
 def clean(path):
