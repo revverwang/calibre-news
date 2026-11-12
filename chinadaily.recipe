@@ -56,7 +56,7 @@ class ChinaDaily(BasicNewsRecipe):
 
     def parse_index(self):
         target = target_date()
-        self.log(f'Target date (Beijing yesterday): {target}')
+        self.log(f'Target date (Beijing today): {target}')
 
         # 1) 收集候选（丢弃比目标日期更旧的，保证绝不混入前天的旧闻）
         buckets, seen = [], set()
