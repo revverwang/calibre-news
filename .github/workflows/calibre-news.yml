@@ -129,7 +129,9 @@ jobs:
           set -e
           python3 .github/scripts/strip_navbar.py "$output"
       - name: Sending Ebook
-        if: ${{ success() }}
+        # 已停用：改用 KOReader OPDS 订阅（每本书都在 docs/books 里可直接订阅下载）
+        # 如需恢复邮件推送，把下面的 false 改回 ${{ success() }}
+        if: false
         run: |
           while read -d '' ebook_path; do
             filename="$(basename "$ebook_path")"
