@@ -3,10 +3,18 @@
   <id>urn:uuid:de004250-f591-5e2f-b983-e1600093d3e2</id>
   <title>Calibre 每日新闻</title>
   <subtitle>每天自动抓取并转制的新闻电子书</subtitle>
-  <updated>2026-11-12T15:38:25Z</updated>
+  <updated>2026-11-13T04:01:21Z</updated>
   <author><name>Calibre News Delivery</name></author>
   <link rel="self" href="https://revverwang.github.io/calibre-news/opds-pages.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://revverwang.github.io/calibre-news/opds-pages.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <entry>
+    <title>国际热点双语简报</title>
+    <id>urn:uuid:e2255ddc-eb8d-5477-82e3-f6d2a60450bf</id>
+    <updated>2026-11-13T00:00:00Z</updated>
+    <author><name>Calibre News Delivery</name></author>
+    <content type="text">EPUB · 25 KB</content>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-13-%E5%9B%BD%E9%99%85%E7%83%AD%E7%82%B9%E5%8F%8C%E8%AF%AD%E7%AE%80%E6%8A%A5.epub"/>
+  </entry>
   <entry>
     <title>环球时报 [Thu, 12 Nov 2026]</title>
     <id>urn:uuid:411a38de-fa48-54e3-a2c7-7ac0f60fbd74</id>
