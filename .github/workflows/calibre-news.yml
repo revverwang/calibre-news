@@ -1,10 +1,12 @@
 name: Calibre News Delivery
 run-name: 'Calibre News Delivery: ${{ github.ref_name }}'
 
+# 2026-11-13 起本机流水线接管：~/.hermes/scripts/kb_news.py（Hermes cron 每天 18:00）
+# 云端 schedule 已停用，仅保留 workflow_dispatch 以便应急手动重跑
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 10 * * *'  # UTC 10:00 = 北京时间 18:00
+  # schedule:
+  #   - cron: '0 10 * * *'  # UTC 10:00 = 北京时间 18:00
   # push:
   #   branches: ['master']
 
