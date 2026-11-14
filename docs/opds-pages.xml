@@ -3,10 +3,26 @@
   <id>urn:uuid:7d6db04e-c8a3-5010-850f-c4f77c66ec9d</id>
   <title>Calibre 每日新闻</title>
   <subtitle>每天自动抓取并转制的新闻电子书</subtitle>
-  <updated>2026-11-13T05:30:41Z</updated>
+  <updated>2026-11-14T10:00:59Z</updated>
   <author><name>Hermes Local Digest</name></author>
   <link rel="self" href="https://revverwang.github.io/calibre-news/opds-pages.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://revverwang.github.io/calibre-news/opds-pages.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <entry>
+    <title>环球时报 2026-11-14</title>
+    <id>urn:uuid:1ec863b5-4aa4-5a29-b896-80954269e4e2</id>
+    <updated>2026-11-14T00:00:00Z</updated>
+    <author><name>Hermes Local Digest</name></author>
+    <content type="text">EPUB · 75 KB</content>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-14-Huanqiu.epub"/>
+  </entry>
+  <entry>
+    <title>China Daily 2026-11-14</title>
+    <id>urn:uuid:391aed76-b175-5d9f-a611-37a5dab52e95</id>
+    <updated>2026-11-14T00:00:00Z</updated>
+    <author><name>Hermes Local Digest</name></author>
+    <content type="text">EPUB · 76 KB</content>
+    <link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="https://revverwang.github.io/calibre-news/books/2026-11-14-China-Daily.epub"/>
+  </entry>
   <entry>
     <title>环球时报 2026-11-13</title>
     <id>urn:uuid:c85ca9bc-8118-5b1d-98c3-a7d9f5e8f017</id>
